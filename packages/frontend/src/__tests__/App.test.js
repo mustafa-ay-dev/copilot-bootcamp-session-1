@@ -405,13 +405,18 @@ describe('App Component', () => {
       expect(screen.queryByText('Loading data...')).not.toBeInTheDocument();
     });
     
+    // Get initial count of items
+    const initialItems = screen.getAllByRole('listitem');
+    const initialCount = initialItems.length;
+    
     // Try to submit with empty input
     const submitButton = screen.getByText('Add Item');
     await act(async () => {
       await user.click(submitButton);
     });
     
-    // Should not add anything (no new item with empty name)
-    expect(screen.queryByText('')).not.toBeInTheDocument();
+    // Should not add anything - count should remain the same
+    const currentItems = screen.getAllByRole('listitem');
+    expect(currentItems.length).toBe(initialCount);
   });
 });
