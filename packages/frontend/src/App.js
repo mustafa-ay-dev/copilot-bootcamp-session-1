@@ -6,6 +6,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newItem, setNewItem] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editingName, setEditingName] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -73,6 +75,43 @@ function App() {
     }
   };
 
+  const handleEdit = (item) => {
+    setEditingId(item.id);
+    setEditingName(item.name);
+  };
+
+  const handleUpdate = async (id) => {
+    if (!editingName.trim()) return;
+
+    try {
+      const response = await fetch(`/api/items/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: editingName }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update item');
+      }
+
+      const updatedItem = await response.json();
+      setData(data.map(item => item.id === id ? updatedItem : item));
+      setEditingId(null);
+      setEditingName('');
+      setError(null);
+    } catch (err) {
+      setError('Error updating item: ' + err.message);
+      console.error('Error updating item:', err);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -103,10 +142,36 @@ function App() {
               {data.length > 0 ? (
                 data.map((item) => (
                   <li key={item.id}>
-                    {item.name}
-                    <button onClick={() => handleDelete(item.id)} className="delete-btn">
-                      Delete
-                    </button>
+                    {editingId === item.id ? (
+                      <>
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          className="edit-input"
+                        />
+                        <div className="button-group">
+                          <button onClick={() => handleUpdate(item.id)} className="save-btn">
+                            Save
+                          </button>
+                          <button onClick={handleCancelEdit} className="cancel-btn">
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <span>{item.name}</span>
+                        <div className="button-group">
+                          <button onClick={() => handleEdit(item)} className="edit-btn">
+                            Edit
+                          </button>
+                          <button onClick={() => handleDelete(item.id)} className="delete-btn">
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </li>
                 ))
               ) : (
